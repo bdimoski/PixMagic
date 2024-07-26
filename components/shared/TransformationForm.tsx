@@ -149,8 +149,9 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                     [fieldName === 'prompt' ? 'prompt' : 'to']: value
                 },
             }))
-            return onChangeField(value)
-        }, 1000);
+        }, 1000)();
+
+        return onChangeField(value)
     }
 
     const onTransformHandler = async () => {
@@ -191,6 +192,7 @@ const TransformationForm = ({ action, data = null, userId, type, creditBalance, 
                         render={({ field }) => (
                             <Select
                                 onValueChange={(value) => onSelectFieldHandler(value, field.onChange)}
+                                value={field.value}
                             >
                                 <SelectTrigger className="select-field">
                                     <SelectValue placeholder="Select Size" />
