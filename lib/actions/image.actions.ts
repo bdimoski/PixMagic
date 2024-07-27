@@ -24,7 +24,7 @@ export async function addImage({ image, userId, path }: AddImageParams) {
     const author = await User.findById(userId);
 
     if (!author) {
-      throw new Error("Author not found");
+      throw new Error("User not found");
     }
 
     const newImage = await Image.create({
@@ -62,8 +62,6 @@ export async function updateImage({ image, userId, path }: UpdateImageParams) {
     return JSON.parse(JSON.stringify(updatedImage));
   } catch (error) {
     handleError(error);
-  } finally {
-    redirect("/");
   }
 }
 
@@ -75,6 +73,8 @@ export async function deleteImage(imageId: string) {
     await Image.findByIdAndDelete(imageId);
   } catch (error) {
     handleError(error);
+  } finally {
+    redirect("/");
   }
 }
 
@@ -85,9 +85,7 @@ export async function getImageById(imageId: string) {
 
     const image = await populateUser(Image.findById(imageId));
 
-    if (!image) {
-      throw new Error("Image not found");
-    }
+    if (!image) throw new Error("Image not found");
 
     return JSON.parse(JSON.stringify(image));
   } catch (error) {
@@ -102,7 +100,7 @@ export async function getAllImages({
   searchQuery = "",
 }: {
   limit?: number;
-  page?: number;
+  page: number;
   searchQuery?: string;
 }) {
   try {
@@ -140,7 +138,7 @@ export async function getAllImages({
     const skipAmount = (Number(page) - 1) * limit;
 
     const images = await populateUser(Image.find(query))
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .skip(skipAmount)
       .limit(limit);
 
@@ -151,6 +149,37 @@ export async function getAllImages({
       data: JSON.parse(JSON.stringify(images)),
       totalPage: Math.ceil(totalImages / limit),
       savedImages,
+    };
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// GET IMAGES BY USER
+export async function getUserImages({
+  limit = 9,
+  page = 1,
+  userId,
+}: {
+  limit?: number;
+  page: number;
+  userId: string;
+}) {
+  try {
+    await connectToDatabase();
+
+    const skipAmount = (Number(page) - 1) * limit;
+
+    const images = await populateUser(Image.find({ author: userId }))
+      .sort({ updatedAt: -1 })
+      .skip(skipAmount)
+      .limit(limit);
+
+    const totalImages = await Image.find({ author: userId }).countDocuments();
+
+    return {
+      data: JSON.parse(JSON.stringify(images)),
+      totalPages: Math.ceil(totalImages / limit),
     };
   } catch (error) {
     handleError(error);
